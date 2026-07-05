@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #a855f7; /* Vibrant purple accent */
+  --color-primary-hover: #c084fc;
+  --color-primary-glow: rgba(168, 85, 247, 0.15);
+  
+  --color-bg-dark: #070a13;      /* Deep navy background */
+  --color-card-dark: #0f1322;    /* Stitch card background */
+  --color-sidebar-dark: #0a0d18; /* Sidebar background */
+  --color-border-dark: #1b2136;  /* Sidebar/card border */
+  
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-outfit: 'Outfit', sans-serif;
+}
+
+:root {
+  --background: #070a13;
+  --foreground: #f8fafc;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070a13;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1b2136;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a855f7;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(15, 19, 34, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(27, 33, 54, 0.5);
+}
+
+/* Glowing text and borders */
+.text-glow {
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+.border-glow {
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.15);
+}
+
+/* Circular Pomodoro Glow */
+.timer-glow {
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.25);
+}
