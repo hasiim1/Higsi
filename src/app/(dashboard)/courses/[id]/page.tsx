@@ -1,6 +1,6 @@
 'use client';
 
-import React, { use } from 'react';
+import React, { use, useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import { 
   useCourses, 
@@ -20,7 +20,9 @@ import {
   Play, 
   CheckCircle,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -32,13 +34,81 @@ export default function CourseDetailsPage({ params }: CourseDetailsProps) {
   const router = useRouter();
   const { id } = use(params);
   
-  const { courses, updateCourse } = useCourses();
+  const { courses, updateCourse, deleteCourse } = useCourses();
   const { modules, lessons, updateLessonStatus } = useCourseContent(id);
   const { notes } = useNotes();
   const { tasks } = useTasks();
   const { assignments } = useAssignments();
 
   const course = courses.find(c => c.id === id);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [editName, setEditName] = useState('');
+  const [editCode, setEditCode] = useState('');
+  const [editLecturer, setEditLecturer] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editCredits, setEditCredits] = useState(3);
+  const [editCoverUrl, setEditCoverUrl] = useState('');
+  const [editFeeStatus, setEditFeeStatus] = useState('');
+
+  useEffect(() => {
+    if (course) {
+      setEditName(course.name);
+      setEditCode(course.code || '');
+      setEditLecturer(course.lecturer || '');
+      setEditLocation(course.location || '');
+      setEditEmail(course.email || '');
+      setEditCredits(course.credits || 3);
+      setEditCoverUrl(course.cover_url || '');
+      setEditFeeStatus(course.fee_status || '🟢 Bixiyay');
+    }
+  }, [course, showEditModal]);
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim()) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      await updateCourse({
+        id,
+        updates: {
+          name: editName,
+          code: editCode,
+          lecturer: editLecturer,
+          location: editLocation,
+          email: editEmail,
+          credits: Number(editCredits),
+          cover_url: editCoverUrl,
+          fee_status: editFeeStatus,
+        }
+      });
+      setShowEditModal(false);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to update course.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    setError(null);
+    try {
+      await deleteCourse(id);
+      setShowDeleteDialog(false);
+      router.push('/courses');
+    } catch (err: any) {
+      setError(err?.message || 'Failed to delete course.');
+      setIsDeleting(false);
+    }
+  };
 
   if (!course) {
     return (
@@ -88,9 +158,25 @@ export default function CourseDetailsPage({ params }: CourseDetailsProps) {
           <span>Back to Courses</span>
         </button>
         
-        <span className="text-xs font-bold text-text-muted bg-card-dark px-3 py-1 rounded-full border border-border-dark">
-          {course.code}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="flex items-center gap-1 text-xs font-bold bg-primary/10 border border-primary/20 hover:bg-primary hover:text-white text-primary px-3 py-1.5 rounded-xl transition cursor-pointer"
+          >
+            <Edit size={12} />
+            <span className="hidden sm:inline">Edit</span>
+          </button>
+          <button
+            onClick={() => setShowDeleteDialog(true)}
+            className="flex items-center gap-1 text-xs font-bold bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white text-red-500 px-3 py-1.5 rounded-xl transition cursor-pointer"
+          >
+            <Trash2 size={12} />
+            <span className="hidden sm:inline">Delete</span>
+          </button>
+          <span className="text-xs font-bold text-text-muted bg-card-dark px-3 py-1.5 rounded-xl border border-border-dark">
+            {course.code}
+          </span>
+        </div>
       </header>
 
       {/* Main Container */}
@@ -251,10 +337,176 @@ export default function CourseDetailsPage({ params }: CourseDetailsProps) {
               </div>
             )}
           </div>
-
         </div>
 
       </div>
+
+      {/* Edit Course Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
+          
+          <div className="bg-card-dark border border-border-dark rounded-3xl p-6 w-full max-w-md relative z-10 shadow-2xl">
+            <h3 className="font-outfit font-bold text-xl text-text-primary mb-4">Edit Course</h3>
+            
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl p-3 text-xs mb-3 font-semibold">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleEdit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">Course Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Advanced Linear Algebra"
+                  className="w-full bg-bg-dark border border-border-dark rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary transition"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">Course Code</label>
+                  <input
+                    type="text"
+                    required
+                    value={editCode}
+                    onChange={(e) => setEditCode(e.target.value)}
+                    placeholder="MATH201"
+                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">Credits</label>
+                  <input
+                    type="number"
+                    required
+                    value={editCredits}
+                    onChange={(e) => setEditCredits(Number(e.target.value))}
+                    placeholder="3"
+                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">Lecturer</label>
+                <input
+                  type="text"
+                  value={editLecturer}
+                  onChange={(e) => setEditLecturer(e.target.value)}
+                  placeholder="Dr. John Watson"
+                  className="w-full bg-bg-dark border border-border-dark rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary transition"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={editLocation}
+                    onChange={(e) => setEditLocation(e.target.value)}
+                    placeholder="Cis Lab 3"
+                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">Fee Status</label>
+                  <select
+                    value={editFeeStatus}
+                    onChange={(e) => setEditFeeStatus(e.target.value)}
+                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary transition"
+                  >
+                    <option value="🟢 Bixiyay">🟢 Bixiyay (Paid)</option>
+                    <option value="🟡 Qeyb">🟡 Qeyb (Partial)</option>
+                    <option value="🔴 Lama Bixin">🔴 Lama Bixin (Unpaid)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">Cover Image URL</label>
+                <input
+                  type="text"
+                  value={editCoverUrl}
+                  onChange={(e) => setEditCoverUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full bg-bg-dark border border-border-dark rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary transition"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end mt-6">
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 rounded-xl border border-border-dark hover:bg-bg-dark text-text-secondary text-sm font-semibold transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-5 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition shadow-lg shadow-primary-glow disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Course Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteDialog(false)} />
+          
+          <div className="bg-card-dark border border-border-dark rounded-3xl p-6 w-full max-w-md relative z-10 shadow-2xl">
+            <h3 className="font-outfit font-bold text-xl text-text-primary mb-2 flex items-center gap-2">
+              <AlertCircle className="text-red-500" size={24} />
+              <span>Delete Course</span>
+            </h3>
+            
+            <p className="text-xs text-text-secondary mb-4 leading-relaxed">
+              Are you sure you want to delete <strong className="text-text-primary">{course.name}</strong>? This action is permanent and will delete all associated modules, lessons, tasks, assignments, and notes.
+            </p>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl p-3 text-xs mb-3 font-semibold">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setShowDeleteDialog(false)}
+                className="px-4 py-2 rounded-xl border border-border-dark hover:bg-bg-dark text-text-secondary text-sm font-semibold transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDelete}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition shadow-lg disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Permanent'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
