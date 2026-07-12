@@ -107,23 +107,26 @@ export default function Sidebar() {
         {/* Bottom Panel */}
         <div className="flex flex-col gap-6">
           {/* Profile Card */}
-          <div className="bg-card-dark border border-border-dark rounded-2xl p-4 flex items-center gap-3">
+          <Link 
+            href="/profile" 
+            className="bg-card-dark border border-border-dark hover:border-primary/40 rounded-2xl p-4 flex items-center gap-3 transition group cursor-pointer"
+          >
             <img 
               src={profile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&auto=format&fit=crop&q=60'} 
               alt={profile?.name || 'User'} 
-              className="w-10 h-10 rounded-full object-cover border border-border-dark"
+              className="w-10 h-10 rounded-full object-cover border border-border-dark group-hover:border-primary transition"
             />
             <div className="flex-1 min-w-0">
-              <h4 className="font-outfit font-semibold text-sm text-text-primary truncate">{profile?.name || 'Loading...'}</h4>
+              <h4 className="font-outfit font-semibold text-sm text-text-primary truncate group-hover:text-primary transition">{profile?.name || 'Loading...'}</h4>
               <p className="font-outfit font-bold text-[10px] text-primary tracking-wider uppercase mt-0.5">Scholarly Excellence</p>
             </div>
             {profile?.streak && (
-              <div className="flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse">
+              <div className="flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse shrink-0">
                 <Flame size={12} className="fill-current" />
                 <span>{profile.streak}</span>
               </div>
             )}
-          </div>
+          </Link>
 
           {/* Bottom Settings / Help */}
           <div className="flex flex-col gap-1">

@@ -4,6 +4,8 @@
 create table public.profiles (
   id uuid references auth.users on delete cascade primary key,
   name text,
+  username text unique,
+  bio text,
   avatar_url text,
   streak integer default 1,
   last_active timestamp with time zone default now(),
