@@ -15,7 +15,8 @@ import {
   HelpCircle,
   Flame,
   Menu,
-  X
+  X,
+  Sparkles
 } from 'lucide-react';
 import { useUIStore } from '@/lib/store';
 import { useAuth, useProfile } from '@/hooks/useData';
@@ -34,6 +35,7 @@ export default function Sidebar() {
     { name: 'Assignments', href: '/assignments', icon: FileText },
     { name: 'Analytics', href: '/analytics', icon: BarChart2 },
     { name: 'Focus Session', href: '/focus', icon: Timer },
+    { name: 'AI Assistant', href: '/assistant', icon: Sparkles },
   ];
 
   const bottomItems = [
