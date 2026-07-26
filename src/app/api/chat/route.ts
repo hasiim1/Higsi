@@ -1,14 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
     const { messages, files } = await req.json();
 
-    const apiKey = process.env.GEMINI_API_KEY || '';
+    const apiKey = process.env.GEMINI_API_KEY || "";
     if (!apiKey) {
-      return NextResponse.json({ 
-        error: 'Gemini API key missing. Please configure GEMINI_API_KEY in your environment variables (.env.local).' 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Gemini API key missing. Please configure GEMINI_API_KEY in your environment variables (.env.local)."
+        },
+        { status: 400 }
+      );
     }
 
     // Prepare system instructions
@@ -21,7 +24,7 @@ export async function POST(req: NextRequest) {
     };
 
     // Construct Gemini contents array
-    const contents = [];
+    const contents: any[] = [];
 
     // Process chat history and files
     // If there are files/images, we attach them to the last user message as context
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Format chat history
     for (const msg of history) {
       contents.push({
-        role: msg.role === 'user' ? 'user' : 'model',
+        role: msg.role === "user" ? "user" : "model",
         parts: [
           { text: msg.content }
         ]
@@ -41,15 +44,15 @@ export async function POST(req: NextRequest) {
     // Format last message with files & images
     const lastMsgParts: any[] = [];
 
-    // Add inline base64 images if present
+    // Add inline base64 images and text contexts if present
     if (files && files.length > 0) {
       let fileTextContext = "User uploaded files for reference:\n\n";
       let hasTextFiles = false;
 
       for (const file of files) {
-        if (file.type.startsWith('image/')) {
+        if (file.type.startsWith("image/")) {
           // Multimodal image part
-          const base64Data = file.base64Data?.split(',')[1] || file.base64Data;
+          const base64Data = file.base64Data?.split(",")[1] || file.base64Data;
           if (base64Data) {
             lastMsgParts.push({
               inlineData: {
@@ -75,7 +78,7 @@ export async function POST(req: NextRequest) {
     lastMsgParts.push({ text: lastMsg.content });
 
     contents.push({
-      role: 'user',
+      role: "user",
       parts: lastMsgParts
     });
 
@@ -83,9 +86,9 @@ export async function POST(req: NextRequest) {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           systemInstruction,
@@ -96,16 +99,22 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('Gemini error response:', errText);
-      return NextResponse.json({ error: `Gemini API error: ${response.statusText}` }, { status: response.status });
+      console.error("Gemini error response:", errText);
+      return NextResponse.json(
+        { error: `Gemini API error: ${response.statusText}` },
+        { status: response.status }
+      );
     }
 
     const resData = await response.json();
-    const replyText = resData.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
+    const replyText = resData.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
 
     return NextResponse.json({ reply: replyText });
   } catch (err: any) {
-    console.error('Chat error:', err);
-    return NextResponse.json({ error: err.message || 'An error occurred during chat' }, { status: 500 });
+    console.error("Chat error:", err);
+    return NextResponse.json(
+      { error: err.message || "An error occurred during chat" },
+      { status: 500 }
+    );
   }
 }
