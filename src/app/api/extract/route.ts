@@ -16,10 +16,12 @@ export async function POST(req: NextRequest) {
     let text = "";
 
     if (file.name.endsWith(".pdf")) {
-      const data = await pdf(buffer);
+      const parsePdf = typeof pdf === "function" ? pdf : (pdf as any).default || pdf;
+      const data = await parsePdf(buffer);
       text = data.text;
     } else if (file.name.endsWith(".docx")) {
-      const result = await mammoth.extractRawText({ buffer });
+      const parseMammoth = typeof mammoth === "object" && mammoth !== null && (mammoth as any).extractRawText ? mammoth : (mammoth as any).default || mammoth;
+      const result = await parseMammoth.extractRawText({ buffer });
       text = result.value;
     } else if (file.name.endsWith(".txt") || file.name.endsWith(".md")) {
       text = buffer.toString("utf-8");
