@@ -5,12 +5,17 @@ export async function POST(req: NextRequest) {
     const { messages, files } = await req.json();
 
     const apiKey = process.env.GEMINI_API_KEY || "";
+
+    console.log("ENV KEY:", process.env.GEMINI_API_KEY);
+    console.log("API EXISTS:", !!process.env.GEMINI_API_KEY);
+
     if (!apiKey) {
       return NextResponse.json(
         {
-          error: "Gemini API key missing. Please configure GEMINI_API_KEY in your environment variables (.env.local)."
+          error:
+            "Gemini API key missing. Please configure GEMINI_API_KEY in your environment variables (.env.local).",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -18,9 +23,9 @@ export async function POST(req: NextRequest) {
     const systemInstruction = {
       parts: [
         {
-          text: "You are the Higsi AI Assistant, an advanced learning assistant designed for university students. You help them review courses, summarize notes, solve tasks, and study. You have access to user-uploaded documents (PDFs, DOCX, TXT, MD) and images. Use the context of these files to answer their questions when appropriate. Be clear, professional, and explain complex concepts simply."
-        }
-      ]
+          text: "You are the Higsi AI Assistant, an advanced learning assistant designed for university students. You help them review courses, summarize notes, solve tasks, and study. You have access to user-uploaded documents (PDFs, DOCX, TXT, MD) and images. Use the context of these files to answer their questions when appropriate. Be clear, professional, and explain complex concepts simply.",
+        },
+      ],
     };
 
     // Construct the contents structure expected by the Gemini API
@@ -34,9 +39,7 @@ export async function POST(req: NextRequest) {
     for (const msg of history) {
       contents.push({
         role: msg.role === "user" ? "user" : "model",
-        parts: [
-          { text: msg.content }
-        ]
+        parts: [{ text: msg.content }],
       });
     }
 
@@ -56,8 +59,8 @@ export async function POST(req: NextRequest) {
             lastMsgParts.push({
               inlineData: {
                 mimeType: file.type,
-                data: base64Data
-              }
+                data: base64Data,
+              },
             });
           }
         } else if (file.extractedText) {
@@ -78,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     contents.push({
       role: "user",
-      parts: lastMsgParts
+      parts: lastMsgParts,
     });
 
     // Request payload structure matching Gemini 1.5 Flash specifications
@@ -87,13 +90,13 @@ export async function POST(req: NextRequest) {
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           systemInstruction,
-          contents
-        })
-      }
+          contents,
+        }),
+      },
     );
 
     if (!response.ok) {
@@ -101,19 +104,21 @@ export async function POST(req: NextRequest) {
       console.error("Gemini API error payload:", errText);
       return NextResponse.json(
         { error: `Gemini API error: ${response.statusText}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
     const resData = await response.json();
-    const replyText = resData.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+    const replyText =
+      resData.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No response generated.";
 
     return NextResponse.json({ reply: replyText });
   } catch (err: any) {
     console.error("Chat route handler error:", err);
     return NextResponse.json(
       { error: err.message || "An error occurred during chat processing" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
