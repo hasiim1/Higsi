@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Prepare system instructions
+    // System instructions configuring the persona of the AI companion
     const systemInstruction = {
       parts: [
         {
@@ -23,15 +23,14 @@ export async function POST(req: NextRequest) {
       ]
     };
 
-    // Construct Gemini contents array
+    // Construct the contents structure expected by the Gemini API
     const contents: any[] = [];
 
-    // Process chat history and files
-    // If there are files/images, we attach them to the last user message as context
+    // Separate chat history (all except last message) and the current user request
     const history = messages.slice(0, -1);
     const lastMsg = messages[messages.length - 1];
 
-    // Format chat history
+    // Append history messages to contents
     for (const msg of history) {
       contents.push({
         role: msg.role === "user" ? "user" : "model",
@@ -41,17 +40,17 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Format last message with files & images
+    // Prepare parts array for the final message (supports multimodal content)
     const lastMsgParts: any[] = [];
 
-    // Add inline base64 images and text contexts if present
+    // Append uploaded files context if present
     if (files && files.length > 0) {
       let fileTextContext = "User uploaded files for reference:\n\n";
       let hasTextFiles = false;
 
       for (const file of files) {
         if (file.type.startsWith("image/")) {
-          // Multimodal image part
+          // Extract base64 image data payload without header prefix
           const base64Data = file.base64Data?.split(",")[1] || file.base64Data;
           if (base64Data) {
             lastMsgParts.push({
@@ -74,7 +73,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Add user's question text
+    // Append user's text question to the final parts array
     lastMsgParts.push({ text: lastMsg.content });
 
     contents.push({
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest) {
       parts: lastMsgParts
     });
 
-    // Call Gemini API
+    // Request payload structure matching Gemini 1.5 Flash specifications
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
@@ -99,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("Gemini error response:", errText);
+      console.error("Gemini API error payload:", errText);
       return NextResponse.json(
         { error: `Gemini API error: ${response.statusText}` },
         { status: response.status }
@@ -111,9 +110,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ reply: replyText });
   } catch (err: any) {
-    console.error("Chat error:", err);
+    console.error("Chat route handler error:", err);
     return NextResponse.json(
-      { error: err.message || "An error occurred during chat" },
+      { error: err.message || "An error occurred during chat processing" },
       { status: 500 }
     );
   }
