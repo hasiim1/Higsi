@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "GEMINI_API_KEY (ama NEXT_PUBLIC_GEMINI_API_KEY) kuma jiro Vercel Environment Variables" },
+        { error: "GEMINI_API_KEY (or NEXT_PUBLIC_GEMINI_API_KEY) is missing in Vercel Environment Variables" },
         { status: 400 },
       );
     }
