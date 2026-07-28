@@ -4,11 +4,11 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "GEMINI_API_KEY is missing in .env.local" },
+        { error: "GEMINI_API_KEY (ama NEXT_PUBLIC_GEMINI_API_KEY) kuma jiro Vercel Environment Variables" },
         { status: 400 },
       );
     }
